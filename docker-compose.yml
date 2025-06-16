@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    container_name: log_dashboard_app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./mason:/app/mason
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=log_dashboard
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+    depends_on:
+      - db
+    networks:
+      - log_network
+
+  db:
+    image: postgres:13
+    container_name: log_dashboard_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=log_dashboard
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - log_network
+
+volumes:
+  postgres_data:
+
+networks:
+  log_network:
+    driver: bridge 

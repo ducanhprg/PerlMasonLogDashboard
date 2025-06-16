@@ -1,0 +1,77 @@
+# Multi-stage build for production
+FROM perl:5.32-slim as builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy dependency files
+COPY cpanfile.prod ./cpanfile
+
+# Install Perl dependencies
+RUN cpanm --installdeps . --notest
+
+# Production stage
+FROM perl:5.32-slim
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy Perl modules from builder
+COPY --from=builder /usr/local/lib/perl5 /usr/local/lib/perl5
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Set working directory
+WORKDIR /app
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Create necessary directories with proper permissions
+RUN mkdir -p /app/logs /app/data /tmp/mason_data \
+    && chown -R appuser:appuser /app /tmp/mason_data \
+    && chmod -R 755 /app \
+    && chmod -R 777 /tmp/mason_data
+
+# Remove development files
+RUN rm -rf \
+    .git \
+    .gitignore \
+    README.md \
+    DEMO_GUIDE.md \
+    docker-compose.yml \
+    docker-compose.prod.yml \
+    Dockerfile \
+    test/
+
+# Set environment variables
+ENV PERL5LIB=/app/lib
+ENV MASON_COMP_ROOT=/app/mason
+ENV MASON_DATA_DIR=/tmp/mason_data
+ENV PLACK_ENV=production
+
+# Switch to non-root user
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/api/stats || exit 1
+
+# Expose port
+EXPOSE 5000
+
+# Use Starman for production PSGI server
+CMD ["starman", "--port", "5000", "--host", "0.0.0.0", "--workers", "4", "bin/app.pl"] 

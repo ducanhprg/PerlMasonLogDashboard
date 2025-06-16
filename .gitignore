@@ -1,0 +1,30 @@
+# Perl
+*.swp
+*.swo
+*~
+.prove
+
+# Application data
+logs/
+data/
+
+# Docker
+.env
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Mason cache
+mason_cache/ 
