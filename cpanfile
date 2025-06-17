@@ -1,3 +1,5 @@
+# Minimal dependencies for Perl Mason PostgreSQL Log Dashboard Demo
+
 # Core web framework
 requires 'Plack', '1.0047';
 requires 'Plack::Request';
@@ -16,15 +18,9 @@ requires 'DBD::Pg', '3.14.2';
 # JSON handling
 requires 'JSON::XS', '4.03';
 
-# Date/Time
+# Date/Time parsing
 requires 'DateTime', '1.54';
 requires 'DateTime::Format::Strptime', '1.78';
 
-# Core modules (might be missing in slim images)
-requires 'FindBin';
-requires 'Carp';
-requires 'Encode';
-
-# Testing
-requires 'Test::More', '1.302175';
-requires 'Test::Exception', '0.43'; 
+# Testing (minimal)
+requires 'Test::More', '1.302175'; 

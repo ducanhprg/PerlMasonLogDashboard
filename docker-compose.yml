@@ -15,9 +15,11 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - log_network
+    restart: unless-stopped
 
   db:
     image: postgres:13
@@ -33,6 +35,13 @@ services:
       - ./db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     networks:
       - log_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d log_dashboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
 volumes:
   postgres_data:
